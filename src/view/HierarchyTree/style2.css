@@ -2,9 +2,9 @@
   position: relative; /*To make Pseudo Children lines*/
 }
 
-/*.tree li {
-  padding: 4px;
-}*/
+.tree li {
+  padding: 8px;
+}
 
 .tree ul {
   list-style: none;

@@ -46,47 +46,61 @@ function TreeNode(props){
 }
 
 function useAbsolutePosition(){
-  const [y, setY] = useState(NaN);
-  const [x, setX] = useState(NaN);
+  const [pos, setPos] = useState(NaN);
   const elementRef =  useCallback(htmlElement => {
     var x = htmlElement ? htmlElement.offsetLeft : undefined;
     var y = htmlElement ? htmlElement.offsetTop :  undefined;
+    var width = htmlElement ? htmlElement.offsetWidth :  undefined;
+    var height = htmlElement ? htmlElement.offsetHeight :  undefined;
     if(x && y){
       for (var x=0, y=0, el=htmlElement; el != null; el = el.offsetParent) {
         x += el.offsetLeft;
         y += el.offsetTop;
       }
     }
-    setY(y)
-    setX(x)
+    setPos({
+      x,
+      y,
+      width,
+      height
+    })
   }, []);
 
   return {
     ref: elementRef,
-    "x": x,
-    "y": y
+    ...pos
   };
 }
 export default function HierarchyTree(props){
   const {data} = props;
-  const {ref:gChild1Ref, x: gChild1x, y: gChild1y} = useAbsolutePosition();
-  const {ref:gChild2Ref, x: gChild2x, y: gChild2y} = useAbsolutePosition();
+  const {ref:child1Ref, ...child1Pos} = useAbsolutePosition();
+  const {ref:child2Ref, ...child2Pos} = useAbsolutePosition();
+  const {ref:gChild11Ref, ...gChild11Pos} = useAbsolutePosition();
+  const {ref:gChild21Ref, ...gChild21Pos} = useAbsolutePosition();
+  const {ref:gChild22Ref, ...gChild22Pos} = useAbsolutePosition();
+  const {ref:gChild23Ref, ...gChild23Pos} = useAbsolutePosition();
 
 
   return (
   <div className="tree">
     <SvgTree>
-      <Connector start={{x:gChild1x, y: gChild1y}} end={{x:gChild2x, y: gChild2y}} color='red' tension={3}/>
+      <Connector start={gChild21Pos} end={gChild22Pos} color='red' tension={1} startPos={1} endPos={1}/>
+      <Connector start={gChild22Pos} end={gChild23Pos} color='red' tension={1} startPos={1} endPos={1}/>
+      <Connector start={child1Pos} end={child2Pos} color='red' tension={1} startPos={1} endPos={1}/>
+      <Connector start={gChild21Pos} end={child2Pos} color='green' tension={1} startPos={3} endPos={3}/>
+      <Connector start={gChild22Pos} end={child2Pos} color='green' tension={1} startPos={3} endPos={3}/>
+      <Connector start={gChild23Pos} end={child2Pos} color='green' tension={1} startPos={3} endPos={3}/>
+      <Connector start={gChild11Pos} end={child1Pos} color='green' tension={1} startPos={3} endPos={3}/>
     </SvgTree>
     <ul>
       <Node name="Parent">
-        <Node name="Child 1" >
-          <Node name="Grand Child 1"/>
+        <Node name="Child 1" reff={child1Ref}>
+          <Node name="Grand Child 1" reff={gChild11Ref}/>
         </Node>
-        <Node name="Child 2" order={3}>
-          <Node name="Grand Child 1" reff={gChild1Ref}/>
-          <Node name="Grand Child 2" reff={gChild2Ref}/>
-          <Node name="Grand Child 3" />
+        <Node name="Child 2" reff={child2Ref}>
+          <Node name="Grand Child 1" reff={gChild21Ref}/>
+          <Node name="Grand Child 2" reff={gChild22Ref}/>
+          <Node name="Grand Child 3" reff={gChild23Ref}/>
         </Node>
       </Node>
     </ul>
@@ -109,14 +123,12 @@ function SvgTree(props){
   return (
     <svg style={{position:'absolute',left:'0px',top:'0px'}}
          width="800" height="600">
-      <g transform="translate(0.5,0.5)">
-        {props.children}
-      </g>
+      {props.children}
     </svg>
   )
 }
 
-function endPoint(props){
+function EndPoint(props){
   const {x, y, radius, color} = props;
   return (
   <circle cx={x}
@@ -126,7 +138,7 @@ function endPoint(props){
   )
 }
 
-function curvedLine(props) {
+function CurvedLine(props) {
   const {x1, y1, x2, y2, color, tension} = props;
   var delta = (x2-x1)*tension;
   var hx1=x1+delta;
@@ -141,17 +153,37 @@ function curvedLine(props) {
 }
 
 function Connector(props){
-  const {start, end, color, tension} = props;
+  const {start, end, color, tension, startPos, endPos} = props;
   let {x:x1, y: y1} = start;
-  x1 += start.offsetWidth;
-  y1 += (start.offsetHeight / 2);
+
+  if(startPos === 1 || startPos === 3){
+    y1 += (start.height / 2);
+    (startPos === 3) && (x1 += start.width);
+  }
+
+  if(startPos === 2 || startPos === 4){
+    x1 += (start.width / 2);
+    (startPos === 4) && (y1 += start.height);
+  }
+
   let {x:x2, y: y2} = end;
-  y2 += (end.offsetHeight / 2);
+
+  if(endPos === 1 || endPos === 3){
+    y2 += (end.height / 2);
+    (endPos === 3) && (x2 += end.width);
+  }
+
+  if(endPos === 2 || endPos === 4){
+    x2 += (end.width / 2);
+    (endPos === 4) && (y2 += end.height);
+  }
+
+
   return(
     <>
-      <endPoint x={x1} y={y1} radius={3} color={color}/>
-      <endPoint x={x2} y={y2} radius={3} color={color}/>
-      <curvedLine x1={x1} y1={y1} x2={x2} y2={y2} radius={3} color={color} tension={tension}/>
+      <EndPoint x={x1} y={y1} radius={3} color={color}/>
+      <EndPoint x={x2} y={y2} radius={3} color={color}/>
+      <CurvedLine x1={x1} y1={y1} x2={x2} y2={y2} radius={3} color={color} tension={tension}/>
     </>
   )
 }
