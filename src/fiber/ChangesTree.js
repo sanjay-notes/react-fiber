@@ -86,7 +86,8 @@ ChangesTree.prototype.traverse = function(preOrderTraversal, postOrderTraversal,
 ChangesTree.prototype.traverseOneNode = function(){
   let {rootNode, currentNode} = this;
   currentNode = currentNode ? currentNode : rootNode;
-  this.currentNode = processNodeAndGetNext(rootNode,currentNode);
-  return currentNode;
+  this.currentNode = processNodeAndGetNext(rootNode,currentNode); // end of traverse will return undef
+  return this.currentNode;
+
 
 };

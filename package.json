@@ -5,10 +5,8 @@
     "start": "node_modules/.bin/webpack-dev-server"
   },
   "dependencies": {
-    "d3": "^5.9.2",
     "express": "^4.16.4",
     "react": "^16.8.5",
-    "react-d3-graph": "^2.0.1",
     "react-dom": "^16.8.5"
   },
   "devDependencies": {

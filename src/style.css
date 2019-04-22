@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+}
+
+.render-container{
+  padding: 8px;
+  border: 1px solid #c8e4f8;
+  border-radius: 2px;
+}
+
+.fiber-container{
+  padding: 8px;
+  border: 1px solid #c8e4f8;
+  border-radius: 2px;
+}

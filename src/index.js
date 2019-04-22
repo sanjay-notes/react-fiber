@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {render} from 'react-dom';
 
 import ChangesTree from './fiber/ChangesTree';
-import D3Graph from './view/D3Graph';
 import HierarchyTree from './view/HierarchyTree';
+import Render from './view/Render';
+import './style.css';
 
 const treeData = {
   a1: {
@@ -39,46 +40,45 @@ const treeData = {
     children: null
   }
 };
-
 const tree = new ChangesTree('a1', treeData);
 
 function App(props){
-  const [graphData, setGraphData] = useState({nodes: [],links:[]});
+  const rootNode = tree.rootNode;
+  const [activeNode, setActiveNode] = useState(rootNode);
+  const [nextDisable, setNextDisable] = useState(true);
 
-  function buildGraph(fiberNode){
-    if(fiberNode){
-      const {instance, parent, firstChild, sibling} = fiberNode;
-      let {nodes, links} = graphData;
-      nodes = nodes.slice();
-      links = links.slice();
-      const id = instance.name;
-      parent && links.push({source: id, target: parent.instance.name, color:'#d3d3d3'});
-      firstChild && links.push({source: id, target: firstChild.instance.name, color:'#00ff00'});
-      sibling && links.push({source: id, target: sibling.instance.name, color:'#ff00ff'});
-      nodes.push({id});
-      setGraphData({
-        nodes,
-        links
-      })
-    }
+  function showNext(){
+    setNextDisable(false);
   }
-
   function onNextHandler(){
-    buildGraph(tree.traverseOneNode())
+    const nextNode = tree.traverseOneNode();
+    if(nextNode) {
+      setActiveNode(nextNode)
+    }
+    setNextDisable(true);
   }
 
-
-
+  let buttonUI = null;
+  if (nextDisable){
+    buttonUI = <button disabled={true}> Next </button>
+  } else {
+    buttonUI = <button onClick={onNextHandler}> Next </button>
+  }
 
   return (
-  <div>
-    <HierarchyTree/>
-    <D3Graph data={graphData} onNext={onNextHandler}/>
-  </div>
+    <div>
+
+      <div>Call render of <strong>{activeNode.instance.name}</strong></div>
+      <div className="container">
+      <Render node={activeNode.instance} onRenderClick={showNext}/>
+      <div className="fiber-container">
+        {buttonUI}
+        <HierarchyTree rootNode={rootNode} activeNode={activeNode} />
+      </div>
+      </div>
+    </div>
   )
 }
 
 
-
-
-render(<App/>, document.getElementById('app'))
+render(<App/>, document.getElementById('app'));
