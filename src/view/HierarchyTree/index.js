@@ -1,8 +1,9 @@
-import React, {useReducer, useState} from 'react';
+import React, {useReducer, useRef} from 'react';
 
 import FiberNode from './FiberNode';
-import Connector from './Connector';
+import Connectors from '../connectors';
 import './style.css';
+import {getBoundingRect} from "./helper";
 
 const initialState = {
   returnLinks:{},
@@ -30,10 +31,15 @@ const reducer = (state, action) => {
 };
 
 export default function HierarchyTree(props){
-  const {rootNode, activeNode} = props;
+  const {rootNode, activeNode, highlight} = props;
   const [linksState, dispatch] = useReducer(reducer, initialState);
   const {returnLinks, nextLinks} = linksState;
   const links = {...returnLinks , ...nextLinks};
+
+  const treeRef =  useRef();
+  // if pos value changes we have to update links, so we have to call componentDidMount - ComponentDidUpdate (useEffect)
+  const treeBoundingClient =  getBoundingRect(treeRef.current);
+  const {width:treeWidth, height:treeHeight} = treeBoundingClient;
 
   function createLink(returnLink, nextLink){
     dispatch({
@@ -46,19 +52,12 @@ export default function HierarchyTree(props){
     });
   }
 
-  const keys = Object.keys(links);
-  const linksUI = keys.map((key)=>{
-    const link = links[key]
-    return <Connector {...link} />
-  });
   return (
-  <div className="tree">
-    <SvgTree>
-      <ArrowMarker/>
-      {linksUI}
-    </SvgTree>
+  <div className="tree" ref={treeRef}>
+    <Connectors width={treeWidth} height={treeHeight} links={links}/>
     <ul>
       {rootNode ? <FiberNode node={rootNode}
+                             highlight={highlight}
                              activeNode={activeNode}
                              createLink={createLink}
                              order={1}
@@ -69,29 +68,7 @@ export default function HierarchyTree(props){
 }
 
 
-function SvgTree(props){
-  return (
-  <svg style={{position:'absolute',left:'0px',top:'0px'}}
-       width="800" height="600">
-    {props.children}
-  </svg>
-  )
-}
 
-
-function ArrowMarker(props){
-  return (
-  <>
-    <defs>
-      <marker id="triangle" viewBox="0 0 10 10" refX="10" refY="5"
-              markerUnits="strokeWidth" markerWidth="8"
-              markerHeight="10" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z"></path>
-      </marker>
-    </defs>
-  </>
-  )
-}
 
 
 

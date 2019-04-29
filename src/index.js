@@ -3,82 +3,73 @@ import {render} from 'react-dom';
 
 import ChangesTree from './fiber/ChangesTree';
 import HierarchyTree from './view/HierarchyTree';
+import DOMTree from './view/DOMTree';
 import Render from './view/Render';
+import Code from './view/Code';
+import Description from './view/description';
+import {code, treeData, getPath, nextStep} from './data';
 import './style.css';
 
-const treeData = {
-  a1: {
-    name: 'a1',
-    children: ['b1', 'b2', 'b3'],
-  },
-  b1: {
-    name: 'b1',
-    children: null
-  },
-  b2: {
-    name: 'b2',
-    children: ['c1']
-  },
-  b3: {
-    name: 'b3',
-    children: ['c2']
-  },
-  c1: {
-    name: 'c1',
-    children: ['d1', 'd2']
-  },
-  c2: {
-    name: 'c2',
-    children: null
-  },
-  d1: {
-    name: 'd1',
-    children: null
-  },
-  d2: {
-    name: 'd2',
-    children: null
-  }
-};
-const tree = new ChangesTree('a1', treeData);
+const tree = new ChangesTree('app', treeData);
+
+let rootNode = tree.rootNode;
+let activeNode = rootNode;
+let activeId = rootNode.instance.id;
 
 function App(props){
-  const rootNode = tree.rootNode;
-  const [activeNode, setActiveNode] = useState(rootNode);
-  const [nextDisable, setNextDisable] = useState(true);
-
-  function showNext(){
-    setNextDisable(false);
-  }
-  function onNextHandler(){
-    const nextNode = tree.traverseOneNode();
-    if(nextNode) {
-      setActiveNode(nextNode)
+  const [stage, setStage] = useState('');
+  let showDOM = false;
+  let shouldRender = false;
+  let instance = activeNode ? activeNode.instance : null;
+  let summary = '';
+  if(stage == 'render'){
+    tree.traverseOneStep(activeNode, stage)
+    shouldRender = true;
+    summary = "Render called on React Instance, which returns array of React Elements."
+  } if(stage == 'change-node'){
+    const {type, node} = tree.traverseOneStep(activeNode);
+    activeNode = node;
+    if(type === 'firstChild'){
+      summary = "Create sibling and parent relation between rendered elements, and returns firstChild as next Item"
+    } else if(type === 'sibling'){
+      summary = "As there is no child, next item: Sibling "
+    } else if(type === 'parentSibling'){
+      summary = "As there is no child and Sibling, next item: Parent Sibling "
     }
-    setNextDisable(true);
+
+  } else if(stage == 'change-path'){
+    activeId  = instance.id;
+    summary = "Check if there is some idle time, if so next node, will be next unit of work"
+  } else if(stage == 'done'){
+    showDOM = true;
+    activeNode = null;
+    activeId = null;
   }
 
-  let buttonUI = null;
-  if (nextDisable){
-    buttonUI = <button disabled={true}> Next </button>
-  } else {
-    buttonUI = <button onClick={onNextHandler}> Next </button>
+  let path = getPath(activeId);
+
+  function _nextStep(line){
+    const nextStage = nextStep(line);
+    setStage(nextStage);
   }
 
   return (
-    <div>
-
-      <div>Call render of <strong>{activeNode.instance.name}</strong></div>
-      <div className="container">
-      <Render node={activeNode.instance} onRenderClick={showNext}/>
-      <div className="fiber-container">
-        {buttonUI}
-        <HierarchyTree rootNode={rootNode} activeNode={activeNode} />
+      <div className="app-container">
+        <div className="code-container container">
+          <Code data={code} lines={43} path={path} onCurrentLine={_nextStep }/>
+        </div>
+        <div className="fiber-container">
+          <Render instance={instance} shouldRender={shouldRender}/>
+          <div className='container'>
+            <HierarchyTree rootNode={rootNode} activeNode={activeNode} highlight={activeId}/>
+          </div>
+        </div>
+        <div className='DOM-container'>
+          {summary ? <Description text={summary}/> : null}
+          {showDOM ? (<DOMTree rootNode={rootNode}/>) : null}
+        </div>
       </div>
-      </div>
-    </div>
   )
 }
-
 
 render(<App/>, document.getElementById('app'));

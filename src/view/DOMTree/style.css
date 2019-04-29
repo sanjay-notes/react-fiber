@@ -1,21 +1,21 @@
-.tree  {
+.DOM-tree  {
   position: relative;
 }
 
-.tree li {
+.DOM-tree li {
   padding: 24px;
 }
 
-.tree ul {
+.DOM-tree ul {
   list-style: none;
-  padding-left: 54px;
+  padding-left: 42px;
   margin: 0;
 }
 
-.tree .node {
+.DOM-tree .DOM-node {
   display: inline-block;
   text-align: center;
-  width: 50px;
+  width: 42px;
   padding: 4px;
   border: 1px solid black;
   border-radius: 4px;
@@ -23,7 +23,7 @@
   color: #000000;
 }
 
-.tree .active {
+.DOM-tree .active {
   background: greenyellow;
   color: #000000;
 }

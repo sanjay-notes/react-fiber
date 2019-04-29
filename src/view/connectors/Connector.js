@@ -2,11 +2,11 @@ import React from 'react';
 
 function EndPoint(props){
   const {x, y, radius, color} = props;
-  return (<circle cx={x} cy={y} r={radius} fill={color}/>);
+  return (<circle cx={x} cy={y} r={radius} fill={color} fillOpacity=".32"/>);
 }
 
 function CurvedLine(props) {
-  let {x1, y1, x2, y2, color, tension, dotted ,isElbow} = props;
+  let {x1, y1, x2, y2, color, tension, dotted ,elbowOrder, isLine} = props;
   let delta,hx2,hy2, hx1, hy1;
 
   if(tension === undefined)tension = 1;
@@ -23,13 +23,23 @@ function CurvedLine(props) {
     hy1=y1;
   }
 
-  const curveValues = isElbow ? (`L ${x2} ${y1} L ${x2} ${y2}`) : (`Q ${hx1} ${hy1} ${x2} ${y2}`);
+  let curveValues;
+  if(elbowOrder === 1){
+    curveValues = `L ${x2} ${y1} L ${x2} ${y2}`;
+  } else if(elbowOrder === 2){
+    curveValues = `L ${x1} ${y2} L ${x2} ${y2}`;
+  } else if(isLine){
+    curveValues = `L ${x2} ${y2}`;
+  } else {
+    curveValues = `Q ${hx1} ${hy1} ${x2} ${y2}`;
+  }
+
   const path =  `M ${x1} ${y1} ${curveValues}`;
 
   if(dotted){
-    return (<path d={path} fill="none" stroke={color} markerEnd="url(#triangle)" strokeDasharray="5,5"/>)
+    return (<path d={path} fill="none" strokeOpacity=".32" stroke={color} markerEnd="url(#triangle)" strokeDasharray="5,5"/>)
   } else {
-    return (<path d={path} fill="none" stroke={color} markerEnd="url(#triangle)"/>)
+    return (<path d={path} fill="none" strokeOpacity=".64" stroke={color} markerEnd="url(#triangle)"/>)
   }
 
 }
@@ -64,24 +74,30 @@ function getCoordinatesBasedOnPos(pos, boundingRect){
 
 }
 
-
 export default function Connector(props){
   const {start, end, type, order } = props;
-  let color, startPos, endPos, dotted, isElbow;
+  let color, startPos, endPos, dotted, elbowOrder, isLine;
   if( type === 'parent'){
     color = 'green';
     startPos = 1;
     endPos = 33;
     dotted = true;
+    elbowOrder = 1;
   } else if(type === 'sibling'){
-    color = 'purple';
+    color = 'blue';
     startPos = 4;
     endPos = 2;
+    isLine = true;
   } else if(type === 'firstChild'){
     color = 'red';
     startPos = 3;
     endPos = 2;
-    isElbow = true;
+    elbowOrder = 1;
+  } else if(type === 'DOM'){
+    color = 'red';
+    startPos = 4;
+    endPos = 1;
+    elbowOrder = 2;
   }
 
   const {x: x1, y: y1} = getCoordinatesBasedOnPos(startPos, start);
@@ -93,7 +109,8 @@ export default function Connector(props){
     <CurvedLine x1={x1} y1={y1} x2={x2} y2={y2} radius={3} color={color}
                 tension={order}
                 dotted={dotted}
-                isElbow={isElbow}/>
+                isLine={isLine}
+                elbowOrder={elbowOrder}/>
   </>
   )
 }

@@ -1,52 +1,54 @@
 import FiberNode from './FiberNode';
 
-function createNodeAndLink(parent, children) {
-  //[c1, c2, c3] .... accessing array from right
-  // c3 -> to react Fibre Node sibling null, return is parent return c3 fibre as previous
-  //
-  parent.firstChild = children.reduceRight((childAsFiberNode, child) => {
-    const node = new FiberNode(child);
-    node.parent = parent;
-    node.sibling = childAsFiberNode;
+function linkElements(parent, children) {
+  parent.firstChild = children.reduceRight((sibling, child) => {
+    const node = new FiberNode(child, sibling, parent);
     return node;
   }, null);
-
   return parent.firstChild;
 }
 
-function linkAndGetFirstChild(node, linkCallback){
-  const elements = node.instance.render();
-  const firstChild = elements ? createNodeAndLink(node, elements) : null;
-  linkCallback && linkCallback(node);
+function render(node){
+  return node.instance.render();
+}
+
+function getFirstChild(node, elements,preOrder){
+  if(!elements){
+    return null;
+  }
+  const firstChild = elements ? linkElements(node, elements) : null;
+  preOrder && preOrder(node);
   return firstChild;
 }
 
-function getParentSibling(root,currentNode, postOrderTraversal){
-  while (!currentNode.sibling) {
-    const {parent} = currentNode;
+function getParentSibling(root, node, postOrder){
+  while (!node.sibling) {
+    const {parent} = node;
     if (!parent || parent === root) return;
-    postOrderTraversal && postOrderTraversal(currentNode);
-    currentNode = parent; // climbing back up (bubble Phase)
+    postOrder && postOrder(node);
+    node = parent;
   }
-  // parent sibling might set here (chithapa) (while loop helps us) or sibling itself
-  postOrderTraversal && postOrderTraversal(currentNode);
-  return currentNode.sibling;
+  return getSibling(node, postOrder);
 }
 
-function processNodeAndGetNext(root, currentNode, preOrderTraversal,postOrderTraversal){
-  let firstChild  = linkAndGetFirstChild(currentNode, preOrderTraversal);
+function getSibling(node, postOrder){
+  node.sibling && postOrder && postOrder();
+  return node.sibling;
+}
 
+function getNextNode(root, node, preOrder,postOrder){
+  if (node === root) return; // traverse completed
+  if (node === null) node = root;
+
+  const elements = render(node);
+
+  let firstChild  = getFirstChild(node,elements, preOrder);
   if (firstChild) return firstChild; // dept first search, (child -> child -> null)
-  if (currentNode === root) return; // traverse completed
 
-  // bubbling phase, Back up (for no child and No sibling
-  // loop to climb up till we find a parent with sibling (chithapa)
-  if(currentNode.sibling){
-    postOrderTraversal && postOrderTraversal(currentNode);
-    return currentNode.sibling;
-  }
+  let sibling = getSibling(node, postOrder);
+  if(sibling) return sibling;
 
-  return getParentSibling(root, currentNode, postOrderTraversal);
+  return getParentSibling(root, node.parent, postOrder);
 }
 
 
@@ -67,15 +69,15 @@ export default class ChangesTree {
     });
 
     this.rootNode = new FiberNode(data[instance]);
+    this.currentNode = null;
   }
 }
 
-ChangesTree.prototype.traverse = function(preOrderTraversal, postOrderTraversal, callback){
+ChangesTree.prototype.traverse = function(preOrder, postOrder, callback){
   let {rootNode, currentNode} = this;
-  currentNode = currentNode ? currentNode : rootNode;
 
   while (true) {
-    currentNode = processNodeAndGetNext(rootNode,currentNode, preOrderTraversal, postOrderTraversal);
+    currentNode = getNextNode(rootNode,currentNode, preOrder, postOrder);
     if(!currentNode){
       callback && callback();
       return;
@@ -85,9 +87,55 @@ ChangesTree.prototype.traverse = function(preOrderTraversal, postOrderTraversal,
 
 ChangesTree.prototype.traverseOneNode = function(){
   let {rootNode, currentNode} = this;
-  currentNode = currentNode ? currentNode : rootNode;
-  this.currentNode = processNodeAndGetNext(rootNode,currentNode); // end of traverse will return undef
+  this.currentNode = getNextNode(rootNode,currentNode); // end of traverse will return undef
   return this.currentNode;
+};
 
 
+
+ChangesTree.prototype.traverseEachStep = function(node){
+  let {rootNode} = this;
+  let currentNode;
+
+  const elements = render(node);
+
+  currentNode  = getFirstChild(node, elements);
+  if (currentNode) return currentNode;
+
+  currentNode = getSibling(node);
+  if (currentNode) return currentNode;
+
+  currentNode = getParentSibling(rootNode, node);
+  if (currentNode) return currentNode;
+};
+
+ChangesTree.prototype.traverseOneStep = function(node, step){
+  let {rootNode} = this;
+  let currentNode;
+
+  if(step === 'render'){
+    this.elements = render(node);
+    return;
+  }
+
+  currentNode = getFirstChild(node, this.elements);
+  if (currentNode) {
+    this.elements = null;
+    return {
+      type: 'firstChild',
+      node: currentNode
+    };
+  }
+
+  currentNode = getSibling(node);
+  if (currentNode) return {
+    type: 'sibling',
+    node: currentNode
+  };
+
+  currentNode = getParentSibling(rootNode, node);
+  if (currentNode) return {
+    type: 'parentSibling',
+    node: currentNode
+  };
 };

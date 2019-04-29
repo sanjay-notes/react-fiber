@@ -12,8 +12,8 @@ function getLink(start, end, type, key, order){
 
 // prevNode for first child - parent
 // prevNode for other childs - are its prev sibling
-export default function FiberNode(props){
-  let {node, activeNode, highlight,createLink, parentPos, parentName, prevNodePos, prevNodeName, isFirstChild, order} = props;
+export default function DOMNode(props){
+  let {node,createLink, parentPos, parentName} = props;
 
   const [nodePos, setPos] = useState({
     x: NaN,
@@ -33,13 +33,10 @@ export default function FiberNode(props){
       if(nodePos.x !== x || nodePos.y !== y || nodePos.width !== width || nodePos.height !== height){ // first round set state
         setPos(newPos);
       } else { //  // second round call props to update the state somewhere in parent
-        const {x:prevNodeX, y:prevNodeY} = prevNodePos;
-        if(!isNaN(prevNodeX) && !isNaN(prevNodeY) && !isNaN(nodePos.x) && !isNaN(nodePos.y)){
-          const type = isFirstChild ? 'firstChild' : 'sibling';
+        if( !isNaN(parentPos.x) && !isNaN(parentPos.y) && !isNaN(nodePos.x) && !isNaN(nodePos.y)){
           const nodeId = node.instance.id;
-          const nextLink = getLink(prevNodePos, nodePos, type, `${prevNodeName}-${nodeId}`); // Next Link
-          const returnLink = getLink(nodePos, parentPos, 'parent', `${nodeId}-${parentName}`, order); // return Link
-          createLink(returnLink, nextLink);
+          const returnLink = getLink(parentPos,nodePos, 'DOM', `${parentName}-${nodeId}`,); // return Link
+          createLink(returnLink);
         }
       }
     }
@@ -50,32 +47,21 @@ export default function FiberNode(props){
 
   var {instance, firstChild, sibling} = node;
 
-  const {id, name }= instance;
-  const shouldHighlight = (id === highlight) ;
-  const className = (shouldHighlight) ? `node active` : 'node';
+  const {id, html:htmlName }= instance;
+  const className =  'DOM-node';
   return (
   <>
     <li key={id}>
-      <span className={className} ref={nodeRef}> {name} </span>
-      {firstChild ? <ul><FiberNode node={firstChild}
-                                   isFirstChild={true}
-                                   highlight={highlight}
-                                   order={1}
+      <span className={className} ref={nodeRef}> {htmlName} </span>
+
+      {firstChild ? <ul><DOMNode node={firstChild}
                                    parentPos={nodePos}
                                    parentName={id}
-                                   prevNodePos={nodePos}
-                                   prevNodeName={id}
-                                   activeNode={activeNode}
                                    createLink={createLink}/></ul> : null}
     </li>
-    {sibling ? <FiberNode node={sibling}
-                          highlight={highlight}
-                          order={order + 1}
-                          activeNode={activeNode}
+    {sibling ? <DOMNode node={sibling}
                           parentPos={parentPos}
                           parentName={parentName}
-                          prevNodePos={nodePos}
-                          prevNodeName={id}
                           createLink={createLink}/> : null}
   </>
   )
