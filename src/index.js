@@ -44,6 +44,7 @@ function App(props){
     showDOM = true;
     activeNode = null;
     activeId = null;
+    summary = "Commit created DOM tree by calling render of React instance in SINGLE FRAME"
   }
 
   let path = getPath(activeId);
