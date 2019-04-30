@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 const path = require('path');
 
 const PATHS = {
@@ -15,7 +14,6 @@ module.exports = {
   },
   context:PATHS.context,
   plugins: [
-    new CleanWebpackPlugin(['dist']),
     new webpack.HotModuleReplacementPlugin()
   ],
   output: {
