@@ -46,11 +46,3 @@ body {
 .DOM-container{
   flex: 1;
 }
-
-
-.disabled {
-  border: 1px solid darkgrey;
-  background: lightgrey;
-  padding: 4px;
-  color: white;
-}
