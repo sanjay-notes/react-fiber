@@ -16,18 +16,24 @@ let rootNode = tree.rootNode;
 let activeNode = rootNode;
 let activeId = rootNode.instance.id;
 
+
+function completeUnitOfWork(node){
+  console.log(node);
+}
+
 function App(props){
   const [stage, setStage] = useState('');
   let showDOM = false;
   let shouldRender = false;
   let instance = activeNode ? activeNode.instance : null;
   let summary = '';
+  let borderId = null;
   if(stage == 'render'){
     tree.traverseOneStep(activeNode, stage)
     shouldRender = true;
     summary = "Render called on React Instance, which returns array of React Elements."
   } if(stage == 'change-node'){
-    const {type, node} = tree.traverseOneStep(activeNode);
+    const {type, node} = tree.traverseOneStep(activeNode, stage,  completeUnitOfWork);
     activeNode = node;
     if(type === 'firstChild'){
       summary = "Create sibling and parent relation between rendered elements, and returns firstChild as next Item"
@@ -40,6 +46,13 @@ function App(props){
   } else if(stage == 'change-path'){
     activeId  = instance.id;
     summary = "Check if there is some idle time, if so next node, will be next unit of work"
+  } else if(stage == 'complete-node'){
+    borderId = instance.id;
+    summary = `Complete UNIT of Work for ${borderId}`
+  } else if(stage == 'complete-parent-node'){
+    const parentNode = activeNode.parent;
+    borderId = parentNode.instance.id;
+    summary = `Complete UNIT of Work for ${borderId}`
   } else if(stage == 'done'){
     showDOM = true;
     activeNode = null;
@@ -62,7 +75,11 @@ function App(props){
         <div className="fiber-container">
           <Render instance={instance} shouldRender={shouldRender}/>
           <div className='container'>
-            <HierarchyTree rootNode={rootNode} activeNode={activeNode} highlight={activeId}/>
+            <HierarchyTree
+              rootNode={rootNode}
+              activeNode={activeNode}
+              complete={borderId}
+              highlight={activeId}/>
           </div>
         </div>
         <div className='DOM-container'>

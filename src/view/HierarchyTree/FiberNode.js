@@ -13,7 +13,7 @@ function getLink(start, end, type, key, order){
 // prevNode for first child - parent
 // prevNode for other childs - are its prev sibling
 export default function FiberNode(props){
-  let {node, activeNode, highlight,createLink, parentPos, parentName, prevNodePos, prevNodeName, isFirstChild, order} = props;
+  let {node, activeNode, highlight,complete,createLink, parentPos, parentName, prevNodePos, prevNodeName, isFirstChild, order} = props;
 
   const [nodePos, setPos] = useState({
     x: NaN,
@@ -50,15 +50,17 @@ export default function FiberNode(props){
 
   var {instance, firstChild, sibling} = node;
 
-  const {id, name }= instance;
-  const shouldHighlight = (id === highlight) ;
-  const className = (shouldHighlight) ? `node active` : 'node';
+  const {id, name}= instance;
+  const highlightClass = (id === highlight) ? 'active' : '';
+  const className = `node ${highlightClass}`;
+  const style = (id === complete) ? {border: '3px solid orange', borderRadius: '0px'} : null;
   return (
   <>
     <li key={id}>
-      <span className={className} ref={nodeRef}> {name} </span>
+      <span className={className} ref={nodeRef} style={style}> {name} </span>
       {firstChild ? <ul><FiberNode node={firstChild}
                                    isFirstChild={true}
+                                   complete={complete}
                                    highlight={highlight}
                                    order={1}
                                    parentPos={nodePos}
@@ -69,6 +71,7 @@ export default function FiberNode(props){
                                    createLink={createLink}/></ul> : null}
     </li>
     {sibling ? <FiberNode node={sibling}
+                          complete={complete}
                           highlight={highlight}
                           order={order + 1}
                           activeNode={activeNode}

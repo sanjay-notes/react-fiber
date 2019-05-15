@@ -1,55 +1,5 @@
 import FiberNode from './FiberNode';
-
-function linkElements(parent, children) {
-  parent.firstChild = children.reduceRight((sibling, child) => {
-    const node = new FiberNode(child, sibling, parent);
-    return node;
-  }, null);
-  return parent.firstChild;
-}
-
-function render(node){
-  return node.instance.render();
-}
-
-function getFirstChild(node, elements,preOrder){
-  if(!elements){
-    return null;
-  }
-  const firstChild = elements ? linkElements(node, elements) : null;
-  preOrder && preOrder(node);
-  return firstChild;
-}
-
-function getParentSibling(root, node, postOrder){
-  while (!node.sibling) {
-    const {parent} = node;
-    if (!parent || parent === root) return;
-    postOrder && postOrder(node);
-    node = parent;
-  }
-  return getSibling(node, postOrder);
-}
-
-function getSibling(node, postOrder){
-  node.sibling && postOrder && postOrder();
-  return node.sibling;
-}
-
-function getNextNode(root, node, preOrder,postOrder){
-  if (node === root) return; // traverse completed
-  if (node === null) node = root;
-
-  const elements = render(node);
-
-  let firstChild  = getFirstChild(node,elements, preOrder);
-  if (firstChild) return firstChild; // dept first search, (child -> child -> null)
-
-  let sibling = getSibling(node, postOrder);
-  if(sibling) return sibling;
-
-  return getParentSibling(root, node.parent, postOrder);
-}
+import {render, getFirstChild, getSibling, getParentSibling, getNextNode} from './helper';
 
 
 export default class ChangesTree {
@@ -109,7 +59,8 @@ ChangesTree.prototype.traverseEachStep = function(node){
   if (currentNode) return currentNode;
 };
 
-ChangesTree.prototype.traverseOneStep = function(node, step){
+// used for Demo
+ChangesTree.prototype.traverseOneStep = function(node, step, completeUnitOfWork){
   let {rootNode} = this;
   let currentNode;
 
@@ -128,12 +79,20 @@ ChangesTree.prototype.traverseOneStep = function(node, step){
   }
 
   currentNode = getSibling(node);
-  if (currentNode) return {
-    type: 'sibling',
-    node: currentNode
-  };
+  if (currentNode) {
+    completeUnitOfWork && completeUnitOfWork(node);
+    return {
+      type: 'sibling',
+      node: currentNode
+    };
+  }
 
-  currentNode = getParentSibling(rootNode, node);
+  if(step === 'complete'){
+    completeUnitOfWork && completeUnitOfWork(node);
+    return;
+  }
+
+  currentNode = getParentSibling(rootNode, node, completeUnitOfWork);
   if (currentNode) return {
     type: 'parentSibling',
     node: currentNode

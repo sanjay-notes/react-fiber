@@ -13,11 +13,11 @@ function getNext(root, node){
   let firstChild  = getFirstChild(node);
   if (firstChild) 
       return firstChild;
-
+  postOrder(node);
   if (node.sibling) 
       return node.sibling;
-
-  return getParentSibling(root, node.parent);
+  
+  return getParentSibling(root, node);
 }
 
 function linkChildren(parent, children) {
@@ -37,6 +37,7 @@ function getParentSibling (root,node){
   while (!node.sibling) {
     if (!node.parent || node.parent === root) 
       return;
+    postOrder(node);
     node = parent;
   }
   return node.sibling;
@@ -104,8 +105,8 @@ const pathMap = {
 
 const paths = {
   firstChild: [5,11,13,32,33,34,27,28,34,13,14,15],
-  sibling: [5,11,13,14,17,18],
-  parentSibling: [5,11,13,14,17,20,37,42],
+  sibling: [5,11,13,14,16,17,18],
+  parentSibling: [5,11,13,14,16,17,20,37,40,41,43],
   root: [5,6]
 };
 
@@ -121,10 +122,14 @@ function nextStep(line){
   if(line == 32 || line == 33 ){
     return 'render';
   }
-  if(line == 27 || line == 18 || line == 42){
+  if(line == 27 || line == 18 || line == 43){
     return 'change-node';
   } else if (line == 5){
     return 'change-path';
+  } else if (line == 16  ){
+    return 'complete-node';
+  } else if (line == 40){
+    return 'complete-parent-node';
   } else if (line == 6 || line == undefined){
     return 'done';
   }

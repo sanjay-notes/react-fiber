@@ -31,7 +31,7 @@ const reducer = (state, action) => {
 };
 
 export default function HierarchyTree(props){
-  const {rootNode, activeNode, highlight} = props;
+  const {rootNode, activeNode, highlight, complete} = props;
   const [linksState, dispatch] = useReducer(reducer, initialState);
   const {returnLinks, nextLinks} = linksState;
   const links = {...returnLinks , ...nextLinks};
@@ -54,15 +54,16 @@ export default function HierarchyTree(props){
 
   return (
   <div className="tree" ref={treeRef}>
-    <Connectors width={treeWidth} height={treeHeight} links={links}/>
     <ul>
       {rootNode ? <FiberNode node={rootNode}
+                             complete={complete}
                              highlight={highlight}
                              activeNode={activeNode}
                              createLink={createLink}
                              order={1}
                              prevNodePos={{x:NaN, y:NaN, width:NaN, height:NaN}}/> : null}
     </ul>
+    <Connectors width={treeWidth} height={treeHeight} links={links}/>
   </div>);
 
 }
