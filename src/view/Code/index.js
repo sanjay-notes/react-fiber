@@ -11,7 +11,7 @@ export default function Code(props){
   }, [path])
 
   const linesUI = [];
-  const highlightLine = path[pivot]
+  const highlightLine = path[pivot] ? (typeof path[pivot] === 'number' ? path[pivot] : path[pivot].line) : '';
 
   for (var line = 1; line <= lines; line++){
     let lineUI;

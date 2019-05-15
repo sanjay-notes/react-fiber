@@ -53,7 +53,7 @@ export default function FiberNode(props){
   const {id, name}= instance;
   const highlightClass = (id === highlight) ? 'active' : '';
   const className = `node ${highlightClass}`;
-  const style = (id === complete) ? {border: '3px solid orange', borderRadius: '0px'} : null;
+  const style = (id === complete) ? {border: '2px solid orange', borderRadius: '0px'} : null;
   return (
   <>
     <li key={id}>

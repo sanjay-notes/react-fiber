@@ -21,6 +21,15 @@ function completeUnitOfWork(node){
   console.log(node);
 }
 
+function getRenderSummary(instance){
+  const children = instance.children;
+  const total = children ? children.length : 0;
+  const elements = total > 0 ? children.map((child)=>{
+    return <li key={child}>{child}</li>
+  }) : '';
+  return (<span>Call <strong>Render</strong> on React-Instance[{instance.id}],<br/> which will return array of React-Elements. <ul>{elements}</ul> </span>)
+}
+
 function App(props){
   const [stage, setStage] = useState('');
   let showDOM = false;
@@ -31,28 +40,28 @@ function App(props){
   if(stage == 'render'){
     tree.traverseOneStep(activeNode, stage)
     shouldRender = true;
-    summary = "Render called on React Instance, which returns array of React Elements."
+    summary = getRenderSummary(instance)
   } if(stage == 'change-node'){
     const {type, node} = tree.traverseOneStep(activeNode, stage,  completeUnitOfWork);
     activeNode = node;
     if(type === 'firstChild'){
-      summary = "Create sibling and parent relation between rendered elements, and returns firstChild as next Item"
+      summary = "Create Sibling and Parent relation between rendered elements, and returns firstChild as next Item"
     } else if(type === 'sibling'){
-      summary = "As there is no child, next item: Sibling "
+      summary = <span>As there is no Child, <br/>Next item: Sibling</span>
     } else if(type === 'parentSibling'){
-      summary = "As there is no child and Sibling, next item: Parent Sibling "
+      summary = <span>As there is no child & Sibling<br/>Next item: Parent Sibling</span>
     }
 
   } else if(stage == 'change-path'){
     activeId  = instance.id;
-    summary = "Check if there is some idle time, if so next node, will be next unit of work"
+    summary = "Check if there is some idle time ? if so next node, will be next unit of work"
   } else if(stage == 'complete-node'){
     borderId = instance.id;
-    summary = `Complete UNIT of Work for ${borderId}`
+    summary = `Complete unit of Work for: ${borderId}`
   } else if(stage == 'complete-parent-node'){
     const parentNode = activeNode.parent;
     borderId = parentNode.instance.id;
-    summary = `Complete UNIT of Work for ${borderId}`
+    summary = `Complete unit of Work for parent: ${borderId}`
   } else if(stage == 'done'){
     showDOM = true;
     activeNode = null;
@@ -83,7 +92,7 @@ function App(props){
           </div>
         </div>
         <div className='DOM-container'>
-          {summary ? <Description text={summary}/> : null}
+          {summary ? <Description>{summary} </Description>: null}
           {showDOM ? (<DOMTree rootNode={rootNode}/>) : null}
         </div>
       </div>

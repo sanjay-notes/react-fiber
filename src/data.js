@@ -104,7 +104,7 @@ const pathMap = {
 };
 
 const paths = {
-  firstChild: [5,11,13,32,33,34,27,28,34,13,14,15],
+  firstChild: [5,11,13,32,33,34,27,28,{line:34,step:'return'},13,14,15],
   sibling: [5,11,13,14,16,17,18],
   parentSibling: [5,11,13,14,16,17,20,37,40,41,43],
   root: [5,6]
@@ -118,9 +118,23 @@ function getPath(id){
 }
 
 
-function nextStep(line){
-  if(line == 32 || line == 33 ){
-    return 'render';
+function nextStep(lineObj){
+  let line, step;
+  if(lineObj){
+    if(typeof lineObj === 'number'){
+      line = lineObj,
+      step = '';
+    } else {
+      line = lineObj.line;
+      step = lineObj.step;
+    }
+  }
+
+  if(line == 32 || line == 33 || line == 34 ){
+    if(!step){
+      return 'render';
+    }
+    return step;
   }
   if(line == 27 || line == 18 || line == 43){
     return 'change-node';
@@ -134,6 +148,7 @@ function nextStep(line){
     return 'done';
   }
 }
+
 export {
   treeData,
   code,
