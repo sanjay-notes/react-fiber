@@ -1,0 +1,17 @@
+.render-child-container {
+  display: flex;
+  flex-direction: row;
+  height: 32px
+}
+
+.render-node {
+  padding: 8px;
+  border: 1px solid black;
+  border-radius: 4px;
+  background: #c8e4f8;
+  color: #000000;
+  text-align: center;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+}
